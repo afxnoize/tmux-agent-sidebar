@@ -569,25 +569,50 @@ impl AppState {
     }
 
     /// Advance cat animation state. Called every spinner tick (200ms).
-    /// `panel_width` is the width of the bottom panel in columns.
     pub fn tick_cat(&mut self, panel_width: u16) {
-        let has_running = self.repo_groups.iter().any(|g| {
-            g.panes
-                .iter()
-                .any(|(p, _)| p.status == crate::tmux::PaneStatus::Running)
-        });
+        let running_count = self.repo_groups.iter().flat_map(|g| &g.panes)
+            .filter(|(p, _)| p.status == crate::tmux::PaneStatus::Running)
+            .count();
 
-        if has_running {
-            self.cat_x = self.cat_x.wrapping_add(1);
-            // Cat sprite width is ~7 chars; wrap after fully off-screen
-            if self.cat_x > panel_width + crate::ui::cat::CAT_WIDTH {
-                self.cat_x = 0;
+        let desk_x = panel_width
+            .saturating_sub(crate::ui::cat::DESK_OFFSET + crate::ui::cat::DESK_WIDTH + crate::ui::cat::CAT_WIDTH);
+
+        match self.cat_state {
+            crate::ui::cat::CatState::Idle => {
+                if running_count > 0 {
+                    self.cat_state = crate::ui::cat::CatState::WalkRight;
+                    self.cat_frame = 0;
+                    self.cat_x = self.cat_x.saturating_add(1);
+                } else {
+                    self.cat_bob_timer = (self.cat_bob_timer + 1) % crate::ui::cat::BOB_INTERVAL;
+                }
             }
-            // Alternate between running frames 1 and 2
-            self.cat_frame = if self.cat_frame == 1 { 2 } else { 1 };
-        } else {
-            // Sitting
-            self.cat_frame = 0;
+            crate::ui::cat::CatState::WalkRight => {
+                self.cat_x = self.cat_x.saturating_add(1);
+                self.cat_frame = if self.cat_frame == 1 { 2 } else { 1 };
+                if self.cat_x >= desk_x {
+                    self.cat_x = desk_x;
+                    self.cat_state = crate::ui::cat::CatState::Working;
+                    self.cat_frame = 0;
+                }
+            }
+            crate::ui::cat::CatState::Working => {
+                self.cat_frame = if self.cat_frame == 1 { 2 } else { 1 };
+                if running_count == 0 {
+                    self.cat_state = crate::ui::cat::CatState::WalkLeft;
+                    self.cat_frame = 0;
+                }
+            }
+            crate::ui::cat::CatState::WalkLeft => {
+                self.cat_x = self.cat_x.saturating_sub(1);
+                self.cat_frame = if self.cat_frame == 1 { 2 } else { 1 };
+                if self.cat_x <= crate::ui::cat::CAT_HOME_X {
+                    self.cat_x = crate::ui::cat::CAT_HOME_X;
+                    self.cat_state = crate::ui::cat::CatState::Idle;
+                    self.cat_frame = 0;
+                    self.cat_bob_timer = 0;
+                }
+            }
         }
     }
 }
@@ -2142,9 +2167,8 @@ mod tests {
     }
 
     #[test]
-    fn tick_cat_advances_when_running() {
+    fn tick_cat_idle_to_walk_right_on_running() {
         let mut state = AppState::new("%0".into());
-        // Add a running agent
         let mut pane = test_pane("1");
         pane.status = PaneStatus::Running;
         state.repo_groups = vec![crate::group::RepoGroup {
@@ -2152,16 +2176,33 @@ mod tests {
             has_focus: false,
             panes: vec![(pane, PaneGitInfo::default())],
         }];
-        let width = 40u16;
-        state.tick_cat(width);
-        assert_eq!(state.cat_x, 2);
-        assert!(state.cat_frame == 1 || state.cat_frame == 2);
+        state.tick_cat(60);
+        assert!(matches!(state.cat_state, crate::ui::cat::CatState::WalkRight));
+        assert!(state.cat_x > crate::ui::cat::CAT_HOME_X);
     }
 
     #[test]
-    fn tick_cat_stays_still_when_idle() {
+    fn tick_cat_walk_right_to_working_at_desk() {
         let mut state = AppState::new("%0".into());
-        // Add an idle agent
+        let mut pane = test_pane("1");
+        pane.status = PaneStatus::Running;
+        state.repo_groups = vec![crate::group::RepoGroup {
+            name: "repo".into(),
+            has_focus: false,
+            panes: vec![(pane, PaneGitInfo::default())],
+        }];
+        let panel_width = 60u16;
+        let desk_x = panel_width
+            .saturating_sub(crate::ui::cat::DESK_OFFSET + crate::ui::cat::DESK_WIDTH + crate::ui::cat::CAT_WIDTH);
+        state.cat_state = crate::ui::cat::CatState::WalkRight;
+        state.cat_x = desk_x - 1;
+        state.tick_cat(panel_width);
+        assert!(matches!(state.cat_state, crate::ui::cat::CatState::Working));
+    }
+
+    #[test]
+    fn tick_cat_working_to_walk_left_when_no_running() {
+        let mut state = AppState::new("%0".into());
         let mut pane = test_pane("1");
         pane.status = PaneStatus::Idle;
         state.repo_groups = vec![crate::group::RepoGroup {
@@ -2169,29 +2210,29 @@ mod tests {
             has_focus: false,
             panes: vec![(pane, PaneGitInfo::default())],
         }];
-        state.cat_x = 5;
-        state.cat_frame = 1;
-        let width = 40u16;
-        state.tick_cat(width);
-        // x stays the same, frame resets to 0 (sitting)
-        assert_eq!(state.cat_x, 5);
-        assert_eq!(state.cat_frame, 0);
+        state.cat_state = crate::ui::cat::CatState::Working;
+        state.cat_x = 40;
+        state.tick_cat(60);
+        assert!(matches!(state.cat_state, crate::ui::cat::CatState::WalkLeft));
     }
 
     #[test]
-    fn tick_cat_wraps_at_width() {
+    fn tick_cat_walk_left_to_idle_at_home() {
         let mut state = AppState::new("%0".into());
-        let mut pane = test_pane("1");
-        pane.status = PaneStatus::Running;
-        state.repo_groups = vec![crate::group::RepoGroup {
-            name: "repo".into(),
-            has_focus: false,
-            panes: vec![(pane, PaneGitInfo::default())],
-        }];
-        let width = 40u16;
-        // Cat sprite is CAT_WIDTH chars wide; place at far right so it wraps
-        state.cat_x = width + crate::ui::cat::CAT_WIDTH;
-        state.tick_cat(width);
-        assert_eq!(state.cat_x, 0);
+        state.cat_state = crate::ui::cat::CatState::WalkLeft;
+        state.cat_x = crate::ui::cat::CAT_HOME_X + 1;
+        state.tick_cat(60);
+        assert_eq!(state.cat_x, crate::ui::cat::CAT_HOME_X);
+        state.tick_cat(60);
+        assert!(matches!(state.cat_state, crate::ui::cat::CatState::Idle));
+    }
+
+    #[test]
+    fn tick_cat_idle_bob() {
+        let mut state = AppState::new("%0".into());
+        for _ in 0..crate::ui::cat::BOB_INTERVAL {
+            state.tick_cat(60);
+        }
+        assert_eq!(state.cat_bob_timer, 0);
     }
 }
