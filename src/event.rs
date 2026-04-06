@@ -3,7 +3,7 @@ use serde_json::Value;
 use crate::adapter;
 
 /// Worktree metadata from Claude Code hook payloads.
-/// All fields are empty strings when the agent is not running in a worktree.
+/// Present only when the agent is running in a worktree; `None` otherwise.
 #[derive(Debug, Clone, PartialEq)]
 pub struct WorktreeInfo {
     pub name: String,

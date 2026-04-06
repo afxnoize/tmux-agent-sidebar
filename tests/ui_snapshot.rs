@@ -917,6 +917,72 @@ fn snapshot_wait_reason_unknown_ui() {
     );
 }
 
+// ─── Permission Denied ───────────────────────────────────────────
+
+#[test]
+fn snapshot_wait_reason_permission_denied_ui() {
+    let mut pane = make_pane(AgentType::Claude, PaneStatus::Waiting);
+    pane.wait_reason = "permission_denied".into();
+
+    let mut state = make_state_with_groups(vec![make_repo_group("project", vec![pane])]);
+
+    let output = render_to_string(&mut state, 28, 25);
+    assert!(
+        output.contains("permission denied"),
+        "permission_denied should show human-readable label"
+    );
+}
+
+// ─── Worktree Name Display ──────────────────────────────────────
+
+#[test]
+fn snapshot_worktree_with_name_ui() {
+    let pane = make_pane(AgentType::Claude, PaneStatus::Running);
+    let git_info = PaneGitInfo {
+        repo_root: Some("/home/user/project".into()),
+        branch: Some("feat/auth".into()),
+        is_worktree: true,
+        worktree_name: Some("auth-wt".into()),
+    };
+    let mut state = make_state_with_groups(vec![tmux_agent_sidebar::group::RepoGroup {
+        name: "project".into(),
+        has_focus: true,
+        panes: vec![(pane, git_info)],
+    }]);
+
+    let output = render_to_string(&mut state, 28, 25);
+    assert!(
+        output.contains("+ auth-wt: feat/auth"),
+        "worktree with different name should show 'name: branch' format"
+    );
+}
+
+#[test]
+fn snapshot_worktree_name_same_as_branch_ui() {
+    let pane = make_pane(AgentType::Claude, PaneStatus::Running);
+    let git_info = PaneGitInfo {
+        repo_root: Some("/home/user/project".into()),
+        branch: Some("feat/auth".into()),
+        is_worktree: true,
+        worktree_name: Some("feat/auth".into()),
+    };
+    let mut state = make_state_with_groups(vec![tmux_agent_sidebar::group::RepoGroup {
+        name: "project".into(),
+        has_focus: true,
+        panes: vec![(pane, git_info)],
+    }]);
+
+    let output = render_to_string(&mut state, 28, 25);
+    assert!(
+        output.contains("+ feat/auth"),
+        "worktree with same name as branch should show just branch"
+    );
+    assert!(
+        !output.contains("feat/auth: feat/auth"),
+        "should not duplicate name and branch"
+    );
+}
+
 // ─── Activity Log Tool Types ──────────────────────────────────────
 
 #[test]

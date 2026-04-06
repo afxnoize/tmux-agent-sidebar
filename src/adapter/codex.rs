@@ -156,7 +156,11 @@ mod tests {
 
     #[test]
     fn permission_denied_not_supported() {
-        assert!(CodexAdapter.parse("permission-denied", &json!({})).is_none());
+        assert!(
+            CodexAdapter
+                .parse("permission-denied", &json!({}))
+                .is_none()
+        );
     }
 
     #[test]
@@ -166,9 +170,13 @@ mod tests {
 
     #[test]
     fn session_start_has_no_worktree() {
-        let event = CodexAdapter.parse("session-start", &json!({"cwd": "/tmp"})).unwrap();
+        let event = CodexAdapter
+            .parse("session-start", &json!({"cwd": "/tmp"}))
+            .unwrap();
         match event {
-            AgentEvent::SessionStart { worktree, agent_id, .. } => {
+            AgentEvent::SessionStart {
+                worktree, agent_id, ..
+            } => {
                 assert!(worktree.is_none());
                 assert!(agent_id.is_none());
             }

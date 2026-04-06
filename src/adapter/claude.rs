@@ -28,11 +28,7 @@ fn parse_worktree(input: &Value) -> Option<WorktreeInfo> {
 /// Parse optional agent_id from hook payload.
 fn parse_agent_id(input: &Value) -> Option<String> {
     let id = json_str(input, "agent_id");
-    if id.is_empty() {
-        None
-    } else {
-        Some(id.into())
-    }
+    if id.is_empty() { None } else { Some(id.into()) }
 }
 
 fn parse_json_field(input: &Value, field: &str) -> Value {
