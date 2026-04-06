@@ -267,6 +267,12 @@ pub struct AppState {
     pub repo_popup_selected: usize,
     pub repo_popup_area: Option<ratatui::layout::Rect>,
     pub repo_button_col: u16,
+    pub cat_state: crate::ui::cat::CatState,
+    /// Cat animation X position (character offset from left of bottom panel).
+    pub cat_x: u16,
+    /// Cat animation frame index (0 = sitting, 1-2 = running).
+    pub cat_frame: usize,
+    pub cat_bob_timer: usize,
     /// Shared state across sidebar instances, persisted to tmux global variables.
     pub global: GlobalState,
 }
@@ -303,6 +309,10 @@ impl AppState {
             repo_popup_selected: 0,
             repo_popup_area: None,
             repo_button_col: u16::MAX,
+            cat_state: crate::ui::cat::CatState::Idle,
+            cat_x: crate::ui::cat::CAT_HOME_X,
+            cat_frame: 0,
+            cat_bob_timer: 0,
             global: GlobalState::new(),
         }
     }
@@ -556,6 +566,29 @@ impl AppState {
 
     pub fn close_repo_popup(&mut self) {
         self.repo_popup_open = false;
+    }
+
+    /// Advance cat animation state. Called every spinner tick (200ms).
+    /// `panel_width` is the width of the bottom panel in columns.
+    pub fn tick_cat(&mut self, panel_width: u16) {
+        let has_running = self.repo_groups.iter().any(|g| {
+            g.panes
+                .iter()
+                .any(|(p, _)| p.status == crate::tmux::PaneStatus::Running)
+        });
+
+        if has_running {
+            self.cat_x = self.cat_x.wrapping_add(1);
+            // Cat sprite width is ~7 chars; wrap after fully off-screen
+            if self.cat_x > panel_width + crate::ui::cat::CAT_WIDTH {
+                self.cat_x = 0;
+            }
+            // Alternate between running frames 1 and 2
+            self.cat_frame = if self.cat_frame == 1 { 2 } else { 1 };
+        } else {
+            // Sitting
+            self.cat_frame = 0;
+        }
     }
 }
 
@@ -2097,5 +2130,68 @@ mod tests {
         assert_eq!(all, 1);
         assert_eq!(running, 1);
         assert_eq!(idle, 0);
+    }
+
+    #[test]
+    fn cat_state_defaults() {
+        let state = AppState::new("%0".into());
+        assert!(matches!(state.cat_state, crate::ui::cat::CatState::Idle));
+        assert_eq!(state.cat_x, crate::ui::cat::CAT_HOME_X);
+        assert_eq!(state.cat_frame, 0);
+        assert_eq!(state.cat_bob_timer, 0);
+    }
+
+    #[test]
+    fn tick_cat_advances_when_running() {
+        let mut state = AppState::new("%0".into());
+        // Add a running agent
+        let mut pane = test_pane("1");
+        pane.status = PaneStatus::Running;
+        state.repo_groups = vec![crate::group::RepoGroup {
+            name: "repo".into(),
+            has_focus: false,
+            panes: vec![(pane, PaneGitInfo::default())],
+        }];
+        let width = 40u16;
+        state.tick_cat(width);
+        assert_eq!(state.cat_x, 2);
+        assert!(state.cat_frame == 1 || state.cat_frame == 2);
+    }
+
+    #[test]
+    fn tick_cat_stays_still_when_idle() {
+        let mut state = AppState::new("%0".into());
+        // Add an idle agent
+        let mut pane = test_pane("1");
+        pane.status = PaneStatus::Idle;
+        state.repo_groups = vec![crate::group::RepoGroup {
+            name: "repo".into(),
+            has_focus: false,
+            panes: vec![(pane, PaneGitInfo::default())],
+        }];
+        state.cat_x = 5;
+        state.cat_frame = 1;
+        let width = 40u16;
+        state.tick_cat(width);
+        // x stays the same, frame resets to 0 (sitting)
+        assert_eq!(state.cat_x, 5);
+        assert_eq!(state.cat_frame, 0);
+    }
+
+    #[test]
+    fn tick_cat_wraps_at_width() {
+        let mut state = AppState::new("%0".into());
+        let mut pane = test_pane("1");
+        pane.status = PaneStatus::Running;
+        state.repo_groups = vec![crate::group::RepoGroup {
+            name: "repo".into(),
+            has_focus: false,
+            panes: vec![(pane, PaneGitInfo::default())],
+        }];
+        let width = 40u16;
+        // Cat sprite is CAT_WIDTH chars wide; place at far right so it wraps
+        state.cat_x = width + crate::ui::cat::CAT_WIDTH;
+        state.tick_cat(width);
+        assert_eq!(state.cat_x, 0);
     }
 }
