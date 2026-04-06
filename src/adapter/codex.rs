@@ -155,6 +155,28 @@ mod tests {
     }
 
     #[test]
+    fn permission_denied_not_supported() {
+        assert!(CodexAdapter.parse("permission-denied", &json!({})).is_none());
+    }
+
+    #[test]
+    fn cwd_changed_not_supported() {
+        assert!(CodexAdapter.parse("cwd-changed", &json!({})).is_none());
+    }
+
+    #[test]
+    fn session_start_has_no_worktree() {
+        let event = CodexAdapter.parse("session-start", &json!({"cwd": "/tmp"})).unwrap();
+        match event {
+            AgentEvent::SessionStart { worktree, agent_id, .. } => {
+                assert!(worktree.is_none());
+                assert!(agent_id.is_none());
+            }
+            _ => panic!("wrong variant"),
+        }
+    }
+
+    #[test]
     fn session_start_missing_fields_default_to_empty() {
         let adapter = CodexAdapter;
         let event = adapter.parse("session-start", &json!({})).unwrap();
