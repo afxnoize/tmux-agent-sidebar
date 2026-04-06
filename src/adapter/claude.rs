@@ -27,6 +27,8 @@ impl EventAdapter for ClaudeAdapter {
                 agent: "claude".into(),
                 cwd: json_str(input, "cwd").into(),
                 permission_mode: json_str(input, "permission_mode").into(),
+                worktree: None,
+                agent_id: None,
             }),
             "session-end" => Some(AgentEvent::SessionEnd),
             "user-prompt-submit" => Some(AgentEvent::UserPromptSubmit {
@@ -34,6 +36,8 @@ impl EventAdapter for ClaudeAdapter {
                 cwd: json_str(input, "cwd").into(),
                 permission_mode: json_str(input, "permission_mode").into(),
                 prompt: json_str(input, "prompt").into(),
+                worktree: None,
+                agent_id: None,
             }),
             "notification" => {
                 let wait_reason = json_str(input, "notification_type");
@@ -44,6 +48,8 @@ impl EventAdapter for ClaudeAdapter {
                     permission_mode: json_str(input, "permission_mode").into(),
                     wait_reason: wait_reason.into(),
                     meta_only,
+                    worktree: None,
+                    agent_id: None,
                 })
             }
             "stop" => Some(AgentEvent::Stop {
@@ -52,6 +58,8 @@ impl EventAdapter for ClaudeAdapter {
                 permission_mode: json_str(input, "permission_mode").into(),
                 last_message: json_str(input, "last_assistant_message").into(),
                 response: None,
+                worktree: None,
+                agent_id: None,
             }),
             "stop-failure" => {
                 let error_type = json_str(input, "error");
@@ -66,6 +74,8 @@ impl EventAdapter for ClaudeAdapter {
                     cwd: json_str(input, "cwd").into(),
                     permission_mode: json_str(input, "permission_mode").into(),
                     error: error.into(),
+                    worktree: None,
+                    agent_id: None,
                 })
             }
             "subagent-start" => {
@@ -118,6 +128,8 @@ mod tests {
                 agent: "claude".into(),
                 cwd: "/home/user".into(),
                 permission_mode: "default".into(),
+                worktree: None,
+                agent_id: None,
             }
         );
     }
@@ -143,6 +155,8 @@ mod tests {
                 cwd: "/tmp".into(),
                 permission_mode: "auto".into(),
                 prompt: "fix bug".into(),
+                worktree: None,
+                agent_id: None,
             }
         );
     }
@@ -161,6 +175,8 @@ mod tests {
                 permission_mode: "default".into(),
                 wait_reason: "permission".into(),
                 meta_only: false,
+                worktree: None,
+                agent_id: None,
             }
         );
     }
@@ -178,6 +194,8 @@ mod tests {
                 permission_mode: "default".into(),
                 wait_reason: "idle_prompt".into(),
                 meta_only: true,
+                worktree: None,
+                agent_id: None,
             }
         );
     }
@@ -196,6 +214,8 @@ mod tests {
                 permission_mode: "default".into(),
                 last_message: "done".into(),
                 response: None,
+                worktree: None,
+                agent_id: None,
             }
         );
     }
@@ -212,6 +232,8 @@ mod tests {
                 cwd: "/tmp".into(),
                 permission_mode: "default".into(),
                 error: "rate_limit".into(),
+                worktree: None,
+                agent_id: None,
             }
         );
     }
@@ -228,6 +250,8 @@ mod tests {
                 cwd: "/tmp".into(),
                 permission_mode: "default".into(),
                 error: "something went wrong".into(),
+                worktree: None,
+                agent_id: None,
             }
         );
     }
@@ -323,6 +347,8 @@ mod tests {
                 permission_mode: "default".into(),
                 wait_reason: "".into(),
                 meta_only: false,
+                worktree: None,
+                agent_id: None,
             }
         );
     }
@@ -339,6 +365,8 @@ mod tests {
                 cwd: "/tmp".into(),
                 permission_mode: "default".into(),
                 error: "".into(),
+                worktree: None,
+                agent_id: None,
             }
         );
     }
@@ -356,6 +384,8 @@ mod tests {
                 permission_mode: "default".into(),
                 last_message: "".into(),
                 response: None,
+                worktree: None,
+                agent_id: None,
             }
         );
     }
@@ -370,6 +400,8 @@ mod tests {
                 agent: "claude".into(),
                 cwd: "".into(),
                 permission_mode: "".into(),
+                worktree: None,
+                agent_id: None,
             }
         );
     }

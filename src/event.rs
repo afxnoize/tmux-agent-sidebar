@@ -2,6 +2,16 @@ use serde_json::Value;
 
 use crate::adapter;
 
+/// Worktree metadata from Claude Code hook payloads.
+/// All fields are empty strings when the agent is not running in a worktree.
+#[derive(Debug, Clone, PartialEq)]
+pub struct WorktreeInfo {
+    pub name: String,
+    pub path: String,
+    pub branch: String,
+    pub original_repo_dir: String,
+}
+
 /// Internal event representation. All fields are pre-extracted by the adapter.
 /// The core handler never reads raw JSON or checks agent names.
 #[derive(Debug, Clone, PartialEq)]
@@ -10,6 +20,8 @@ pub enum AgentEvent {
         agent: String,
         cwd: String,
         permission_mode: String,
+        worktree: Option<WorktreeInfo>,
+        agent_id: Option<String>,
     },
     SessionEnd,
     UserPromptSubmit {
@@ -17,6 +29,8 @@ pub enum AgentEvent {
         cwd: String,
         permission_mode: String,
         prompt: String,
+        worktree: Option<WorktreeInfo>,
+        agent_id: Option<String>,
     },
     Notification {
         agent: String,
@@ -27,6 +41,8 @@ pub enum AgentEvent {
         /// Used for events like idle_prompt that carry metadata but should not
         /// trigger a visible status change.
         meta_only: bool,
+        worktree: Option<WorktreeInfo>,
+        agent_id: Option<String>,
     },
     Stop {
         agent: String,
@@ -34,12 +50,16 @@ pub enum AgentEvent {
         permission_mode: String,
         last_message: String,
         response: Option<String>,
+        worktree: Option<WorktreeInfo>,
+        agent_id: Option<String>,
     },
     StopFailure {
         agent: String,
         cwd: String,
         permission_mode: String,
         error: String,
+        worktree: Option<WorktreeInfo>,
+        agent_id: Option<String>,
     },
     SubagentStart {
         agent_type: String,
@@ -51,6 +71,18 @@ pub enum AgentEvent {
         tool_name: String,
         tool_input: Value,
         tool_response: Value,
+    },
+    PermissionDenied {
+        agent: String,
+        cwd: String,
+        permission_mode: String,
+        worktree: Option<WorktreeInfo>,
+        agent_id: Option<String>,
+    },
+    CwdChanged {
+        cwd: String,
+        worktree: Option<WorktreeInfo>,
+        agent_id: Option<String>,
     },
 }
 
@@ -175,6 +207,7 @@ mod tests {
                 agent,
                 cwd,
                 permission_mode,
+                ..
             } => {
                 assert!(meta_only, "idle_prompt should be meta_only");
                 assert_eq!(wait_reason, "idle_prompt");
@@ -196,6 +229,49 @@ mod tests {
                 assert!(!meta_only, "normal notification should not be meta_only");
             }
             other => panic!("expected Notification, got {:?}", other),
+        }
+    }
+
+    #[test]
+    fn worktree_info_default_is_none() {
+        let event = AgentEvent::SessionStart {
+            agent: "claude".into(),
+            cwd: "/tmp".into(),
+            permission_mode: "default".into(),
+            worktree: None,
+            agent_id: None,
+        };
+        match event {
+            AgentEvent::SessionStart { worktree, agent_id, .. } => {
+                assert!(worktree.is_none());
+                assert!(agent_id.is_none());
+            }
+            _ => panic!("wrong variant"),
+        }
+    }
+
+    #[test]
+    fn worktree_info_with_values() {
+        let wt = WorktreeInfo {
+            name: "feat-branch".into(),
+            path: "/tmp/wt".into(),
+            branch: "feat".into(),
+            original_repo_dir: "/home/user/repo".into(),
+        };
+        let event = AgentEvent::SessionStart {
+            agent: "claude".into(),
+            cwd: "/tmp/wt".into(),
+            permission_mode: "default".into(),
+            worktree: Some(wt.clone()),
+            agent_id: Some("abc-123".into()),
+        };
+        match event {
+            AgentEvent::SessionStart { worktree, agent_id, .. } => {
+                let wt = worktree.unwrap();
+                assert_eq!(wt.original_repo_dir, "/home/user/repo");
+                assert_eq!(agent_id.unwrap(), "abc-123");
+            }
+            _ => panic!("wrong variant"),
         }
     }
 

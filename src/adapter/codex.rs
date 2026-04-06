@@ -12,6 +12,8 @@ impl EventAdapter for CodexAdapter {
                 agent: "codex".into(),
                 cwd: json_str(input, "cwd").into(),
                 permission_mode: json_str(input, "permission_mode").into(),
+                worktree: None,
+                agent_id: None,
             }),
             "session-end" => Some(AgentEvent::SessionEnd),
             "user-prompt-submit" => Some(AgentEvent::UserPromptSubmit {
@@ -19,6 +21,8 @@ impl EventAdapter for CodexAdapter {
                 cwd: json_str(input, "cwd").into(),
                 permission_mode: json_str(input, "permission_mode").into(),
                 prompt: json_str(input, "prompt").into(),
+                worktree: None,
+                agent_id: None,
             }),
             "stop" => Some(AgentEvent::Stop {
                 agent: "codex".into(),
@@ -26,6 +30,8 @@ impl EventAdapter for CodexAdapter {
                 permission_mode: json_str(input, "permission_mode").into(),
                 last_message: json_str(input, "last_assistant_message").into(),
                 response: Some("{\"continue\":true}".into()),
+                worktree: None,
+                agent_id: None,
             }),
             _ => None,
         }
@@ -48,6 +54,8 @@ mod tests {
                 agent: "codex".into(),
                 cwd: "/home/user".into(),
                 permission_mode: "".into(),
+                worktree: None,
+                agent_id: None,
             }
         );
     }
@@ -73,6 +81,8 @@ mod tests {
                 cwd: "/tmp".into(),
                 permission_mode: "".into(),
                 prompt: "hello".into(),
+                worktree: None,
+                agent_id: None,
             }
         );
     }
@@ -90,6 +100,8 @@ mod tests {
                 permission_mode: "".into(),
                 last_message: "done".into(),
                 response: Some("{\"continue\":true}".into()),
+                worktree: None,
+                agent_id: None,
             }
         );
     }
@@ -131,6 +143,8 @@ mod tests {
                 permission_mode: "".into(),
                 last_message: "".into(),
                 response: Some("{\"continue\":true}".into()),
+                worktree: None,
+                agent_id: None,
             }
         );
     }
@@ -150,6 +164,8 @@ mod tests {
                 agent: "codex".into(),
                 cwd: "".into(),
                 permission_mode: "".into(),
+                worktree: None,
+                agent_id: None,
             }
         );
     }

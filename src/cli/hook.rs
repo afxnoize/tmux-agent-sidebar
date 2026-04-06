@@ -141,6 +141,7 @@ fn handle_event(pane: &str, event: AgentEvent) -> i32 {
             agent,
             cwd,
             permission_mode,
+            ..
         } => {
             set_agent_meta(pane, &agent, &cwd, &permission_mode);
             set_attention(pane, "clear");
@@ -162,6 +163,7 @@ fn handle_event(pane: &str, event: AgentEvent) -> i32 {
             cwd,
             permission_mode,
             prompt,
+            ..
         } => {
             set_agent_meta(pane, &agent, &cwd, &permission_mode);
             set_attention(pane, "clear");
@@ -181,6 +183,7 @@ fn handle_event(pane: &str, event: AgentEvent) -> i32 {
             permission_mode,
             wait_reason,
             meta_only,
+            ..
         } => {
             set_agent_meta(pane, &agent, &cwd, &permission_mode);
             if meta_only {
@@ -198,6 +201,7 @@ fn handle_event(pane: &str, event: AgentEvent) -> i32 {
             permission_mode,
             last_message,
             response,
+            ..
         } => {
             set_agent_meta(pane, &agent, &cwd, &permission_mode);
             set_attention(pane, "clear");
@@ -217,6 +221,7 @@ fn handle_event(pane: &str, event: AgentEvent) -> i32 {
             cwd,
             permission_mode,
             error,
+            ..
         } => {
             set_agent_meta(pane, &agent, &cwd, &permission_mode);
             set_attention(pane, "clear");
@@ -249,6 +254,12 @@ fn handle_event(pane: &str, event: AgentEvent) -> i32 {
             tool_response,
         } => {
             return handle_activity_log(pane, &tool_name, &tool_input, &tool_response);
+        }
+        AgentEvent::PermissionDenied { .. } => {
+            // Will be implemented in Task 4
+        }
+        AgentEvent::CwdChanged { .. } => {
+            // Will be implemented in Task 4
         }
     }
     0
