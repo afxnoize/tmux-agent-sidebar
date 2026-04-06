@@ -166,8 +166,7 @@ impl GlobalState {
     /// Only updates `last_saved_filter` on success so that a failed write
     /// does not cause sync to overwrite the user's choice.
     pub fn save_filter(&mut self) {
-        if tmux::run_tmux(&["set", "-g", "@sidebar_filter", self.agent_filter.as_str()]).is_some()
-        {
+        if tmux::run_tmux(&["set", "-g", "@sidebar_filter", self.agent_filter.as_str()]).is_some() {
             self.last_saved_filter = self.agent_filter;
         }
     }

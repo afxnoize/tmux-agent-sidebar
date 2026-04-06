@@ -61,11 +61,13 @@ impl AppState {
     }
 
     /// Fast refresh: tmux state + activity log (called every 1s).
-    pub fn refresh(&mut self) {
+    /// Returns whether the sidebar's window is the active tmux window.
+    pub fn refresh(&mut self) -> bool {
         self.refresh_now();
-        let (focused, _, _, _) = tmux::get_sidebar_pane_info(&self.tmux_pane);
+        let (focused, window_active, _, _) = tmux::get_sidebar_pane_info(&self.tmux_pane);
         self.apply_session_snapshot(focused, tmux::query_sessions());
         self.refresh_activity_data();
+        window_active
     }
 
     pub(crate) fn refresh_task_progress(&mut self) {

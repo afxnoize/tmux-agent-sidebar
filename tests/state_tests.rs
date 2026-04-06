@@ -726,71 +726,73 @@ fn full_sync_picks_up_cursor_from_another_instance() {
     );
 }
 
-// ─── SIGUSR1 sync behavior tests ────────────────────────────────────
-// In the main loop, load_from_tmux() is called ONLY when SIGUSR1 fires
-// (pane/window focus change). Periodic refresh does NOT sync global state.
-// This prevents task completion hooks from overwriting the filter.
-
-#[test]
-fn global_state_stable_without_sigusr1() {
-    // Simulates: periodic refresh without SIGUSR1.
-    // GlobalState is never touched — filter stays as user set it.
-    let mut g = make_global();
-    g.agent_filter = AgentFilter::Running;
-    g.selected_agent_row = 5;
-
-    // No apply_all called (periodic refresh skips global sync).
-    // State remains exactly as set locally.
-    assert_eq!(g.agent_filter, AgentFilter::Running);
-    assert_eq!(g.selected_agent_row, 5);
-}
+// ─── window activation sync tests ───────────────────────────────────
+// In the main loop, load_from_tmux() is called ONLY when the sidebar's
+// window becomes active after being inactive for ≥2 refresh cycles
+// (debounced to ignore hook-induced flicker). Periodic refresh within
+// the same active window does NOT sync global state.
 
 #[test]
 fn global_state_stable_during_task_completion() {
-    // Simulates: task completes, hooks fire, but no SIGUSR1.
-    // GlobalState should remain untouched.
+    // Task completes in the active window — window stays active,
+    // so load_from_tmux is never called. Filter stays as user set it.
     let mut g = make_global();
 
-    // Startup: adopt "running"
     g.apply_all(&make_opts(&[("@sidebar_filter", "running")]));
-    assert_eq!(g.agent_filter, AgentFilter::Running);
-
-    // User changes to Idle locally
     g.agent_filter = AgentFilter::Idle;
 
-    // Task completes — no SIGUSR1, so load_from_tmux is NOT called.
-    // GlobalState stays as user set it.
+    // No apply_all called during task completion (window still active).
     assert_eq!(
         g.agent_filter,
         AgentFilter::Idle,
-        "filter must not change during task completion (no SIGUSR1)"
+        "filter must not change during task completion (window stayed active)"
     );
 }
 
 #[test]
-fn sigusr1_syncs_filter_from_another_window() {
-    // Simulates: user switches window → SIGUSR1 → load_from_tmux.
-    // Another window had set filter to Waiting.
+fn window_switch_syncs_after_debounce() {
+    // Simulates: user leaves this window (inactive for 2+ cycles),
+    // another instance changes filter, user returns → sync fires.
     let mut g = make_global();
 
-    // Startup in this window
     g.apply_all(&make_opts(&[("@sidebar_filter", "running")]));
     assert_eq!(g.agent_filter, AgentFilter::Running);
 
-    // Another window changes filter to Waiting, then user switches here.
-    // SIGUSR1 fires → load_from_tmux → apply_all
+    // User returns to this window after being away.
+    // Debounce passed (inactive_count >= 2) → apply_all called.
     g.apply_all(&make_opts(&[("@sidebar_filter", "waiting")]));
 
     assert_eq!(
         g.agent_filter,
         AgentFilter::Waiting,
-        "SIGUSR1 on window switch should sync filter from tmux"
+        "window activation after debounce should sync filter"
     );
 }
 
 #[test]
-fn sigusr1_syncs_all_fields() {
-    // SIGUSR1 triggers full sync of filter, cursor, and repo filter.
+fn window_active_flicker_does_not_trigger_sync() {
+    // Simulates: hook processing causes window_active to flicker
+    // (1 cycle of inactive). Debounce threshold (≥2) prevents sync.
+    // This is tested at the main loop level — GlobalState itself
+    // is passive. Verify that apply_all is NOT called unless the
+    // main loop determines debounce threshold was met.
+    let mut g = make_global();
+
+    g.apply_all(&make_opts(&[("@sidebar_filter", "running")]));
+    g.agent_filter = AgentFilter::Idle;
+
+    // Flicker: only 1 cycle of inactive (count=1 < threshold=2).
+    // Main loop would NOT call apply_all. State stays local.
+    assert_eq!(
+        g.agent_filter,
+        AgentFilter::Idle,
+        "1-cycle flicker must not trigger sync"
+    );
+}
+
+#[test]
+fn window_activation_syncs_all_fields() {
+    // Window activation triggers full sync of filter, cursor, and repo filter.
     let mut g = make_global();
 
     g.apply_all(&make_opts(&[

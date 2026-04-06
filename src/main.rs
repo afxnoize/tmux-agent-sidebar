@@ -93,6 +93,7 @@ fn run_app(
     state.theme = tmux_agent_sidebar::ui::colors::ColorTheme::from_tmux();
     state.global.load_from_tmux();
     state.refresh();
+    let mut window_inactive_count: u32 = 0;
 
     if let Some(ref pane_id) = state.focused_pane_id {
         if let Some(path) = tmux::get_pane_path(pane_id) {
@@ -266,7 +267,16 @@ fn run_app(
 
         let sigusr1 = NEEDS_REFRESH.swap(false, Ordering::Relaxed);
         if sigusr1 || last_refresh.elapsed() >= refresh_interval {
-            state.refresh();
+            let is_window_active = state.refresh();
+            if is_window_active {
+                if window_inactive_count >= 2 {
+                    state.global.load_from_tmux();
+                    state.rebuild_row_targets();
+                }
+                window_inactive_count = 0;
+            } else {
+                window_inactive_count = window_inactive_count.saturating_add(1);
+            }
             git_tab_active.store(state.bottom_tab == BottomTab::GitStatus, Ordering::Relaxed);
             last_refresh = std::time::Instant::now();
         }
