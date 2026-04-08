@@ -241,6 +241,7 @@ Create or edit `~/.codex/hooks.json`:
 | Key | Action |
 |---|---|
 | `prefix + e` | Toggle sidebar (default, customizable) |
+| `prefix + E` | Toggle sidebar in all windows (default, customizable) |
 | `j` / `Down` | Move selection down (filter → agents → bottom panel) |
 | `k` / `Up` | Move selection up |
 | `h` / `Left` | Previous filter (when on filter bar) |
@@ -304,6 +305,7 @@ All options can be set **before** loading the plugin in your `tmux.conf`:
 ```tmux
 # Sidebar
 set -g @sidebar_key T                    # keybinding (default: e)
+set -g @sidebar_key_all Y                # keybinding for all windows (default: E)
 set -g @sidebar_width 32                 # width in columns or % (default: 15%)
 
 # Colors (256-color palette numbers)

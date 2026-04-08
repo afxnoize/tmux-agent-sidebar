@@ -89,10 +89,10 @@ fn snapshot_activity_unfocused_styled() {
     }];
 
     let output = render_to_styled_string(&mut state, 28, 14);
-    // Bottom panel border uses border_active (fg:117) regardless of focus
+    // Bottom panel border should use border_inactive (fg:240) when unfocused
     assert!(
-        output.contains("fg:117"),
-        "activity unfocused border should use BORDER_ACTIVE (fg:117)"
+        output.contains("fg:240"),
+        "activity unfocused border should use BORDER_INACTIVE (fg:240)"
     );
 }
 
