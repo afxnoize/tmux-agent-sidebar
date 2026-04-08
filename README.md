@@ -226,6 +226,16 @@ Create or edit `~/.codex/hooks.json`:
           }
         ]
       }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.tmux/plugins/tmux-agent-sidebar/hook.sh codex session-end"
+          }
+        ]
+      }
     ]
   }
 }
