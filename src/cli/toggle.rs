@@ -141,18 +141,14 @@ pub(crate) fn cmd_toggle(args: &[String]) -> i32 {
 
 pub(crate) fn cmd_toggle_all(_args: &[String]) -> i32 {
     let current_window = tmux::display_message("", "#{window_id}");
-    let has_sidebar = tmux::run_tmux(&[
-        "list-panes", "-t", &current_window, "-F", "#{@pane_role}",
-    ])
-    .unwrap_or_default()
-    .lines()
-    .any(|line| line == "sidebar");
+    let has_sidebar = tmux::run_tmux(&["list-panes", "-t", &current_window, "-F", "#{@pane_role}"])
+        .unwrap_or_default()
+        .lines()
+        .any(|line| line == "sidebar");
 
     if has_sidebar {
-        let all_panes = tmux::run_tmux(&[
-            "list-panes", "-a", "-F", "#{pane_id}|#{@pane_role}",
-        ])
-        .unwrap_or_default();
+        let all_panes = tmux::run_tmux(&["list-panes", "-a", "-F", "#{pane_id}|#{@pane_role}"])
+            .unwrap_or_default();
         for line in all_panes.lines() {
             let parts: Vec<&str> = line.splitn(2, '|').collect();
             if parts.len() >= 2 && parts[1] == "sidebar" {
@@ -161,7 +157,10 @@ pub(crate) fn cmd_toggle_all(_args: &[String]) -> i32 {
         }
     } else {
         let all_windows = tmux::run_tmux(&[
-            "list-windows", "-a", "-F", "#{window_id} #{pane_current_path}",
+            "list-windows",
+            "-a",
+            "-F",
+            "#{window_id} #{pane_current_path}",
         ])
         .unwrap_or_default();
         for line in all_windows.lines() {
