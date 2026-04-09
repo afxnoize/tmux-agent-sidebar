@@ -20,6 +20,8 @@ cargo fmt --check              # Check formatting (used in CI)
 
 CI runs `cargo test`, `cargo clippy`, and `cargo fmt --check` on every push/PR.
 
+実装が完了したら `cargo build --release` を実行すること。worktree で作業している場合はさらにビルド成果物を tmux plugin ディレクトリへコピーする（下記「Debugging」セクション参照）。
+
 ## Architecture
 
 ### Entry Points
