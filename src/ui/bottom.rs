@@ -190,20 +190,14 @@ fn render_git_header(state: &AppState, inner_w: usize) -> (Vec<Line<'static>>, O
         if let Some((ahead, behind)) = state.git.ahead_behind {
             if ahead > 0 {
                 movement_spans.push(Span::raw(" "));
-                movement_spans.push(Span::styled(
-                    "↑",
-                    Style::default().fg(theme.diff_added),
-                ));
+                movement_spans.push(Span::styled("↑", Style::default().fg(theme.diff_added)));
                 movement_spans.push(Span::styled(
                     ahead.to_string(),
                     Style::default().fg(theme.text_active),
                 ));
             }
             if behind > 0 {
-                movement_spans.push(Span::styled(
-                    "↓",
-                    Style::default().fg(theme.diff_deleted),
-                ));
+                movement_spans.push(Span::styled("↓", Style::default().fg(theme.diff_deleted)));
                 movement_spans.push(Span::styled(
                     behind.to_string(),
                     Style::default().fg(theme.text_active),
@@ -675,7 +669,10 @@ mod tests {
             .iter()
             .position(|span| span.content.as_ref() == "↓")
             .expect("behind arrow should be rendered");
-        assert!(two_pos < down_pos, "ahead count should appear before behind arrow");
+        assert!(
+            two_pos < down_pos,
+            "ahead count should appear before behind arrow"
+        );
         assert!(
             !spans[two_pos + 1..down_pos]
                 .iter()

@@ -5,7 +5,7 @@ use test_helpers::*;
 use tmux_agent_sidebar::activity::ActivityEntry;
 use tmux_agent_sidebar::group::{PaneGitInfo, RepoGroup};
 use tmux_agent_sidebar::state::{
-    StatusFilter, AppState, BottomTab, Focus, GlobalState, RepoFilter, RowTarget,
+    AppState, BottomTab, Focus, GlobalState, RepoFilter, RowTarget, StatusFilter,
 };
 use tmux_agent_sidebar::tmux::{AgentType, PaneInfo, PaneStatus, SessionInfo, WindowInfo};
 

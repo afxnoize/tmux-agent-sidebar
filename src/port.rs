@@ -135,7 +135,9 @@ fn best_command_for_pane(
         }
         let candidate = args.trim().to_string();
         let len = candidate.len();
-        let is_leaf = children_of.get(&pid).map_or(true, |children| children.is_empty());
+        let is_leaf = children_of
+            .get(&pid)
+            .map_or(true, |children| children.is_empty());
         if is_leaf {
             leaf_candidates.push((len, candidate));
         } else {
@@ -149,7 +151,10 @@ fn best_command_for_pane(
     }
 
     fallback_candidates.sort_by(|a, b| b.0.cmp(&a.0).then_with(|| a.1.cmp(&b.1)));
-    fallback_candidates.into_iter().next().map(|(_, command)| command)
+    fallback_candidates
+        .into_iter()
+        .next()
+        .map(|(_, command)| command)
 }
 
 fn extract_port(name: &str) -> Option<u16> {

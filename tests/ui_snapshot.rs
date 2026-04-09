@@ -4,7 +4,7 @@ mod test_helpers;
 use test_helpers::*;
 use tmux_agent_sidebar::activity::{ActivityEntry, TaskProgress, TaskStatus};
 use tmux_agent_sidebar::group::PaneGitInfo;
-use tmux_agent_sidebar::state::{StatusFilter, Focus};
+use tmux_agent_sidebar::state::{Focus, StatusFilter};
 use tmux_agent_sidebar::tmux::{
     AgentType, PaneInfo, PaneStatus, PermissionMode, SessionInfo, WindowInfo,
 };

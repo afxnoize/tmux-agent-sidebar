@@ -6,7 +6,7 @@ use ratatui::{
     widgets::{Block, Borders, Clear, Paragraph},
 };
 
-use crate::state::{StatusFilter, AppState, Focus, RepoFilter};
+use crate::state::{AppState, Focus, RepoFilter, StatusFilter};
 use crate::tmux::PaneStatus;
 use crate::ui::colors::ColorTheme;
 use crate::ui::icons::StatusIcons;
@@ -26,12 +26,18 @@ fn render_filter_bar<'a>(state: &AppState, bar_width: u16) -> (Line<'a>, u16) {
         (StatusFilter::All, None, all),
         (
             StatusFilter::Running,
-            Some((icons.status_icon(&PaneStatus::Running), theme.status_running)),
+            Some((
+                icons.status_icon(&PaneStatus::Running),
+                theme.status_running,
+            )),
             running,
         ),
         (
             StatusFilter::Waiting,
-            Some((icons.status_icon(&PaneStatus::Waiting), theme.status_waiting)),
+            Some((
+                icons.status_icon(&PaneStatus::Waiting),
+                theme.status_waiting,
+            )),
             waiting,
         ),
         (
@@ -968,9 +974,15 @@ mod tests {
     fn running_icon_for_all_statuses() {
         let icons = StatusIcons::default();
         assert_eq!(running_icon_for(&PaneStatus::Idle, 0, &icons), ("○", None));
-        assert_eq!(running_icon_for(&PaneStatus::Waiting, 0, &icons), ("◐", None));
+        assert_eq!(
+            running_icon_for(&PaneStatus::Waiting, 0, &icons),
+            ("◐", None)
+        );
         assert_eq!(running_icon_for(&PaneStatus::Error, 0, &icons), ("✕", None));
-        assert_eq!(running_icon_for(&PaneStatus::Unknown, 0, &icons), ("·", None));
+        assert_eq!(
+            running_icon_for(&PaneStatus::Unknown, 0, &icons),
+            ("·", None)
+        );
 
         let (icon, color) = running_icon_for(&PaneStatus::Running, 0, &icons);
         assert_eq!(icon, "●");
