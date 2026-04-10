@@ -98,7 +98,7 @@ fn process_matches_agent(args: &str, agent_name: &str) -> bool {
     };
     let command = command.trim_matches('"');
     let basename = command.rsplit('/').next().unwrap_or(command);
-    basename == agent_name
+    basename.contains(agent_name)
 }
 
 fn process_basename(args: &str) -> Option<&str> {
@@ -340,5 +340,10 @@ mod tests {
         ));
         assert!(!process_matches_agent("bash -lc codex", "codex"));
         assert!(!process_matches_agent("grep claude", "claude"));
+        // Nix-wrapped binary names
+        assert!(process_matches_agent(
+            "/nix/store/xxx-claude-code-2.1.97/bin/.claude-unwrapped --flag",
+            "claude"
+        ));
     }
 }
