@@ -320,6 +320,7 @@ All options can be set **before** loading the plugin in your `tmux.conf`:
 set -g @sidebar_key T                    # keybinding (default: e)
 set -g @sidebar_key_all Y                # keybinding for all windows (default: E)
 set -g @sidebar_width 32                 # width in columns or % (default: 15%)
+set -g @sidebar_bottom_height 20         # bottom panel height in lines (default: 20, 0 to hide)
 set -g @sidebar_auto_create off          # disable auto-create on new windows (default: on)
 
 # Colors (256-color palette numbers)

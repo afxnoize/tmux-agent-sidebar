@@ -287,6 +287,9 @@ pub struct AppState {
     pub hyperlink_overlays: Vec<HyperlinkOverlay>,
     pub port_scan_initialized: bool,
     pub last_port_refresh: Instant,
+    /// Height of the bottom panel in lines. Loaded once at startup from
+    /// the `@sidebar_bottom_height` tmux option. A value of 0 hides the panel.
+    pub bottom_panel_height: u16,
 }
 
 /// Screen-positioned hyperlink overlay for OSC 8 terminal hyperlinks.
@@ -334,6 +337,7 @@ impl AppState {
             hyperlink_overlays: vec![],
             port_scan_initialized: false,
             last_port_refresh: Instant::now(),
+            bottom_panel_height: crate::ui::BOTTOM_PANEL_HEIGHT,
         }
     }
 

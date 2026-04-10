@@ -94,6 +94,7 @@ fn run_app(
     let mut state = AppState::new(tmux_pane);
     state.theme = tmux_agent_sidebar::ui::colors::ColorTheme::from_tmux();
     state.icons = tmux_agent_sidebar::ui::icons::StatusIcons::from_tmux();
+    state.bottom_panel_height = tmux_agent_sidebar::ui::bottom_panel_height_from_tmux();
     state.global.load_from_tmux();
     state.refresh();
     let mut window_inactive_count: u32 = 0;
@@ -235,10 +236,10 @@ fn run_app(
                     },
                     Event::Mouse(mouse) => {
                         let term_height = terminal.size().map(|s| s.height).unwrap_or(0);
+                        let bottom_h = state.bottom_panel_height;
                         match mouse.kind {
                             MouseEventKind::Down(MouseButton::Left) => {
-                                let bottom_start =
-                                    term_height.saturating_sub(ui::BOTTOM_PANEL_HEIGHT);
+                                let bottom_start = term_height.saturating_sub(bottom_h);
                                 if mouse.row < bottom_start {
                                     state.handle_mouse_click(mouse.row, mouse.column);
                                 } else if mouse.row == bottom_start {
@@ -246,20 +247,10 @@ fn run_app(
                                 }
                             }
                             MouseEventKind::ScrollDown => {
-                                state.handle_mouse_scroll(
-                                    mouse.row,
-                                    term_height,
-                                    ui::BOTTOM_PANEL_HEIGHT,
-                                    3,
-                                );
+                                state.handle_mouse_scroll(mouse.row, term_height, bottom_h, 3);
                             }
                             MouseEventKind::ScrollUp => {
-                                state.handle_mouse_scroll(
-                                    mouse.row,
-                                    term_height,
-                                    ui::BOTTOM_PANEL_HEIGHT,
-                                    -3,
-                                );
+                                state.handle_mouse_scroll(mouse.row, term_height, bottom_h, -3);
                             }
                             _ => {}
                         }
