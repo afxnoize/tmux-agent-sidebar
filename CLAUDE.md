@@ -20,7 +20,7 @@ cargo fmt --check              # Check formatting (used in CI)
 
 CI runs `cargo test`, `cargo clippy`, and `cargo fmt --check` on every push/PR.
 
-実装が完了したら `cargo build --release` を実行すること。worktree で作業している場合はさらにビルド成果物を tmux plugin ディレクトリへコピーする（下記「Debugging」セクション参照）。
+After implementation is complete, run `cargo build --release`. When working in a worktree, also copy the build artifact to the tmux plugin directory (see "Debugging" section below).
 
 ## Architecture
 
@@ -63,15 +63,15 @@ Tests are in `/tests/` using Ratatui's `TestBackend` for UI rendering assertions
 
 ## Debugging (Local tmux Plugin)
 
-ローカルでデバッグするには、release ビルド後にビルド成果物を tmux plugin ディレクトリへコピーし、サイドバーを再起動する。
+To debug locally, copy the release build artifact to the tmux plugin directory and restart the sidebar.
 
 ```bash
 cargo build --release
 cp target/release/tmux-agent-sidebar ~/.tmux/plugins/tmux-agent-sidebar/target/release/tmux-agent-sidebar
-# サイドバーを再起動（tmux のキーバインドで toggle off → on）
+# Restart sidebar (toggle off → on via tmux keybinding)
 ```
 
-**worktree で作業する場合**: worktree 内でビルドすると成果物は worktree 側の `target/release/` に出力される。コピー先は同じ。
+**When working in a worktree**: Building inside a worktree outputs the artifact to the worktree's `target/release/`. The copy destination is the same.
 
 ```bash
 cp <worktree-path>/target/release/tmux-agent-sidebar ~/.tmux/plugins/tmux-agent-sidebar/target/release/tmux-agent-sidebar
@@ -80,3 +80,7 @@ cp <worktree-path>/target/release/tmux-agent-sidebar ~/.tmux/plugins/tmux-agent-
 ## Rust Edition
 
 This project uses Rust edition 2024 (`Cargo.toml`).
+
+## Writing Guidelines
+
+- All documentation under `docs/` and all skill files under `.claude/skills/` must be written in English.
