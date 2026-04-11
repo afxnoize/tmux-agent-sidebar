@@ -1,10 +1,48 @@
-use crate::event::{AgentEvent, EventAdapter};
+use crate::event::{AgentEvent, AgentEventKind, EventAdapter};
 use crate::tmux::CODEX_AGENT;
 use serde_json::Value;
 
-use super::json_str;
+use super::{HookRegistration, json_str};
 
 pub struct CodexAdapter;
+
+impl CodexAdapter {
+    /// Single source of truth for Codex CLI hook wiring. Verified against
+    /// Codex CLI's official hook event enum in
+    /// `openai/codex:codex-rs/hooks/src/engine/config.rs`, which currently
+    /// defines only: `PreToolUse`, `PostToolUse`, `SessionStart`,
+    /// `UserPromptSubmit`, `Stop`.
+    ///
+    /// Caveats:
+    /// - `SessionEnd` is kept because the `parse()` arm still accepts it,
+    ///   but Codex CLI does **not** fire SessionEnd. The existing README
+    ///   config and parse arm are effectively dead and should be reviewed.
+    /// - `PreToolUse` / `PostToolUse` are supported by Codex but not yet
+    ///   wired to any internal event (future opportunity for Codex activity
+    ///   logging).
+    pub const HOOK_REGISTRATIONS: &'static [HookRegistration] = &[
+        HookRegistration {
+            trigger: "SessionStart",
+            matcher: Some("startup|resume"),
+            kind: AgentEventKind::SessionStart,
+        },
+        HookRegistration {
+            trigger: "SessionEnd",
+            matcher: None,
+            kind: AgentEventKind::SessionEnd,
+        },
+        HookRegistration {
+            trigger: "UserPromptSubmit",
+            matcher: None,
+            kind: AgentEventKind::UserPromptSubmit,
+        },
+        HookRegistration {
+            trigger: "Stop",
+            matcher: None,
+            kind: AgentEventKind::Stop,
+        },
+    ];
+}
 
 impl EventAdapter for CodexAdapter {
     fn parse(&self, event_name: &str, input: &Value) -> Option<AgentEvent> {
@@ -43,6 +81,11 @@ impl EventAdapter for CodexAdapter {
 mod tests {
     use super::*;
     use serde_json::json;
+
+    #[test]
+    fn hook_registrations_match_parse_arms() {
+        super::super::assert_table_drift_free("codex", CodexAdapter::HOOK_REGISTRATIONS);
+    }
 
     #[test]
     fn session_start() {

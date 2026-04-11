@@ -1,8 +1,8 @@
-use crate::event::{AgentEvent, EventAdapter, WorktreeInfo};
+use crate::event::{AgentEvent, AgentEventKind, EventAdapter, WorktreeInfo};
 use crate::tmux::CLAUDE_AGENT;
 use serde_json::Value;
 
-use super::json_str;
+use super::{HookRegistration, json_str};
 
 /// Parse optional worktree object from hook payload.
 /// Returns None if the "worktree" field is missing or not an object.
@@ -48,6 +48,100 @@ fn parse_json_field(input: &Value, field: &str) -> Value {
 }
 
 pub struct ClaudeAdapter;
+
+impl ClaudeAdapter {
+    /// Single source of truth for Claude Code hook wiring. Each entry pairs
+    /// a real Claude Code trigger (verified against the official hooks
+    /// reference at code.claude.com/docs/en/hooks) with the internal
+    /// `AgentEventKind` the sidebar produces. Drift against `parse()` is
+    /// caught by `hook_registrations_match_parse_arms` below.
+    ///
+    /// Note: `PostToolUse` maps to `AgentEventKind::ActivityLog` — the only
+    /// entry where the upstream trigger and the internal kind have
+    /// different names.
+    pub const HOOK_REGISTRATIONS: &'static [HookRegistration] = &[
+        HookRegistration {
+            trigger: "SessionStart",
+            matcher: None,
+            kind: AgentEventKind::SessionStart,
+        },
+        HookRegistration {
+            trigger: "SessionEnd",
+            matcher: None,
+            kind: AgentEventKind::SessionEnd,
+        },
+        HookRegistration {
+            trigger: "UserPromptSubmit",
+            matcher: None,
+            kind: AgentEventKind::UserPromptSubmit,
+        },
+        HookRegistration {
+            trigger: "Notification",
+            matcher: None,
+            kind: AgentEventKind::Notification,
+        },
+        HookRegistration {
+            trigger: "Stop",
+            matcher: None,
+            kind: AgentEventKind::Stop,
+        },
+        HookRegistration {
+            trigger: "StopFailure",
+            matcher: None,
+            kind: AgentEventKind::StopFailure,
+        },
+        HookRegistration {
+            trigger: "PermissionDenied",
+            matcher: None,
+            kind: AgentEventKind::PermissionDenied,
+        },
+        HookRegistration {
+            trigger: "CwdChanged",
+            matcher: None,
+            kind: AgentEventKind::CwdChanged,
+        },
+        HookRegistration {
+            trigger: "SubagentStart",
+            matcher: None,
+            kind: AgentEventKind::SubagentStart,
+        },
+        HookRegistration {
+            trigger: "SubagentStop",
+            matcher: None,
+            kind: AgentEventKind::SubagentStop,
+        },
+        HookRegistration {
+            trigger: "PostToolUse",
+            matcher: None,
+            kind: AgentEventKind::ActivityLog,
+        },
+        HookRegistration {
+            trigger: "TaskCreated",
+            matcher: None,
+            kind: AgentEventKind::TaskCreated,
+        },
+        HookRegistration {
+            trigger: "TaskCompleted",
+            matcher: None,
+            kind: AgentEventKind::TaskCompleted,
+        },
+        HookRegistration {
+            trigger: "TeammateIdle",
+            matcher: None,
+            kind: AgentEventKind::TeammateIdle,
+        },
+        HookRegistration {
+            trigger: "WorktreeCreate",
+            matcher: None,
+            kind: AgentEventKind::WorktreeCreate,
+        },
+        HookRegistration {
+            trigger: "WorktreeRemove",
+            matcher: None,
+            kind: AgentEventKind::WorktreeRemove,
+        },
+    ];
+}
 
 impl EventAdapter for ClaudeAdapter {
     fn parse(&self, event_name: &str, input: &Value) -> Option<AgentEvent> {
@@ -181,6 +275,11 @@ impl EventAdapter for ClaudeAdapter {
 mod tests {
     use super::*;
     use serde_json::json;
+
+    #[test]
+    fn hook_registrations_match_parse_arms() {
+        super::super::assert_table_drift_free("claude", ClaudeAdapter::HOOK_REGISTRATIONS);
+    }
 
     #[test]
     fn session_start() {
