@@ -56,6 +56,15 @@ Only report gaps relevant to sidebar agent monitoring:
 - **JSON fields**: Overlooked fields in already-handled events that directly improve sidebar display
 - **New hook events**: Events related to agent lifecycle or state tracking (e.g., `TaskCreated`, `TaskCompleted`, `PermissionDenied`, `TeammateIdle`)
 
+### Known Deferred Gaps
+
+These gaps are intentionally left unfixed. Report them only when the trigger condition is met — otherwise include them in the coverage table as `Partial (deferred)` with a one-line pointer to this section instead of repeating the full analysis.
+
+- **`TaskCreated` extra fields (`teammate_name`, `team_name`, `task_description`)**
+  - **Current state**: `src/adapter/claude.rs` captures only `task_id` and `task_subject`. The `src/cli/hook.rs` handler for `AgentEvent::TaskCreated` is a no-op (`"Redundant with activity-log; TaskCreate tool use already recorded"`) because the `TaskCreate` tool's `PostToolUse` already writes the activity log entry via the `activity-log` path.
+  - **Why deferred**: With the handler doing nothing, capturing the extra fields would be dead code. The fields have no consumer today.
+  - **Trigger to revisit**: Claude Code **Agents Teams** feature becomes a target for the sidebar — e.g. showing per-teammate task assignment in the activity log or a new UI panel for team state. When that work starts, capture `teammate_name` / `team_name` / `task_description` and thread them into whichever layer needs them (likely `src/cli/label.rs` for a richer `TaskCreate` label, or a new field on `AgentEvent::TaskCreated` consumed by a new handler).
+
 ## Procedure
 
 ### 1. Fetch Upstream Documentation
