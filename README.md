@@ -1,12 +1,12 @@
 <h1 align="center">tmux-agent-sidebar</h1>
 
-<p align="center">A tmux sidebar that monitors all AI coding agents (Claude Code, Codex) across every session and window — statuses, prompts, git info, activity logs, and more in one place.</p>
+<p align="center">A tmux sidebar that monitors all AI coding agents (Claude Code, Codex) across all sessions and windows — statuses, prompts, Git info, activity logs, and more in one place.</p>
 
 <p align="center"><img src="assets/main.png" alt="main" /></p>
 
 ## Features
 
-- **Cross-session monitoring** — Shows all agents across every tmux session and window in one sidebar
+- **Cross-session monitoring** — Shows all agents from every tmux session and window in one sidebar
 - **Activity log** — Streams each tool invocation (Read, Edit, Bash, etc.) per agent in real time
 - **Task & subagent tracking** — Displays task progress (e.g. `3/7`) and spawned subagents as a parent-child tree
 - **Git integration** — Shows branch name, ahead/behind counts, PR number (`gh`), and per-file diff stats
@@ -36,19 +36,19 @@
           </ul>
         </li>
         <li><b>Session name</b>
-          <ul><li>tmux session the pane belongs to</li></ul>
+          <ul><li>the tmux session the pane belongs to</li></ul>
         </li>
         <li><b>+ marker</b>
           <ul><li>indicates a git worktree</li></ul>
         </li>
         <li><b>Branch</b>
-          <ul><li>current git branch for the pane's cwd</li></ul>
+          <ul><li>the current Git branch for the pane's cwd</li></ul>
         </li>
         <li><b>Elapsed time</b>
           <ul><li>time since the last user prompt</li></ul>
         </li>
         <li><b>Task progress</b>
-          <ul><li>e.g. <code>3/7</code>, synced from the agent's task list</li></ul>
+          <ul><li>e.g. <code>3/7</code>, synchronized from the agent's task list</li></ul>
         </li>
         <li><b>Subagent tree</b>
           <ul><li>parent-child branches for spawned subagents</li></ul>
@@ -57,7 +57,7 @@
           <ul><li>localhost ports the pane's process is listening on</li></ul>
         </li>
         <li><b>Response arrow (▶)</b>
-          <ul><li>latest agent response preview</li></ul>
+          <ul><li>preview of the latest agent response</li></ul>
         </li>
         <li><b>Prompt text</b>
           <ul><li>latest user prompt</li></ul>
@@ -75,7 +75,7 @@
 - tmux 3.0+
 - [TPM](https://github.com/tmux-plugins/tpm) (recommended, for plugin installation)
 - [Rust](https://rustup.rs/) (only if building from source)
-- [GitHub CLI](https://cli.github.com/) (optional, for PR number display in Git tab)
+- [GitHub CLI](https://cli.github.com/) (optional, for displaying PR numbers in the Git tab)
 
 ## Setting Up
 
@@ -90,7 +90,7 @@ set -g @plugin 'hiroppy/tmux-agent-sidebar'
 run '~/.tmux/plugins/tpm/tpm'
 ```
 
-Press `prefix + I` to install. On first run, an install wizard will prompt you to download a pre-built binary or build from source.
+Press `prefix + I` to install. On the first run, an install wizard prompts you to download a pre-built binary or build from source.
 
 To update later, press `prefix + U` in TPM's plugin list and select `tmux-agent-sidebar`. The install wizard runs again if the bundled binary has changed.
 
@@ -134,15 +134,15 @@ run-shell ~/.tmux/plugins/tmux-agent-sidebar/tmux-agent-sidebar.tmux
 
 ### 2. Reload tmux config
 
-After updating `tmux.conf`, press `prefix + r` to reload.
+After updating `tmux.conf`, press `prefix + r` to reload the config.
 
 ### 3. Agent Hooks
 
-The sidebar receives status updates through agent hooks. Add the following hook configurations to your agent settings.
+The sidebar receives status updates through agent hooks. Add the following hook definitions to your agent settings.
 
 #### 3.1 Claude Code
 
-Please create ~/.claude/settings.json first.
+Create `~/.claude/settings.json` first.
 
 **Option A — Let an LLM wire it up (recommended).** Paste the following prompt into a Claude Code session:
 
@@ -340,7 +340,7 @@ Run ~/.tmux/plugins/tmux-agent-sidebar/target/release/tmux-agent-sidebar doctor 
 
 #### 3.2 Codex
 
-Please create ~/.codex/hooks.json first.
+Create `~/.codex/hooks.json` first.
 
 **Option A — Let an LLM wire it up (recommended).** Paste the following prompt into a Codex session:
 
@@ -409,14 +409,14 @@ Run ~/.tmux/plugins/tmux-agent-sidebar/target/release/tmux-agent-sidebar doctor 
 | `prefix + E` | Toggle sidebar in all windows (default, customizable) |
 | `j` / `Down` | Move selection down (filter → agents → bottom panel) |
 | `k` / `Up` | Move selection up |
-| `h` / `Left` | Previous status filter (filter bar only) |
-| `l` / `Right` | Next status filter (filter bar only) |
+| `h` / `Left` | Previous status filter when the filter bar is focused |
+| `l` / `Right` | Next status filter when the filter bar is focused |
 | `r` | Open repo filter popup (filter bar only) |
-| `Enter` | Jump to selected agent's pane / confirm repo popup |
+| `Enter` | Jump to the selected agent's pane / confirm the repo popup |
 | `Tab` | Cycle status filter (All → Running → Waiting → Idle → Error) |
 | `Shift+Tab` | Switch bottom panel tab (Activity / Git) |
-| `Esc` | Return focus to agents panel / close repo popup |
-| Mouse click | Jump to agent's pane / filter by status / open repo popup |
+| `Esc` | Return focus to the agents panel / close the repo popup |
+| Mouse click | Jump to an agent's pane / filter by status / open the repo popup |
 
 
 ## Feature Support by Agent
@@ -428,10 +428,10 @@ Run ~/.tmux/plugins/tmux-agent-sidebar/target/release/tmux-agent-sidebar doctor 
 | Response text display (`▶ ...`) | :white_check_mark: | :white_check_mark: | Populated from `Stop` payload |
 | Waiting status + wait reason | :white_check_mark: | :x: | Populated from `Notification`, `PermissionDenied`, and `TeammateIdle` (all Claude-only) |
 | API failure reason display | :white_check_mark: | :x: | `StopFailure` is wired only for Claude |
-| Permission badge | :white_check_mark: (`plan` / `edit` / `auto` / `!`) | :white_check_mark: (`auto` / `!` only) | Codex badges are inferred from process args |
+| Permission badge | :white_check_mark: (`plan` / `edit` / `auto` / `!`) | :white_check_mark: (`auto` / `!` only) | Codex badges are inferred from process arguments |
 | Git branch display | :white_check_mark: | :white_check_mark: | Uses the pane `cwd`; Claude updates dynamically via `CwdChanged` |
 | Elapsed time | :white_check_mark: | :white_check_mark: | Since the last prompt |
-| Task progress | :white_check_mark: | :x: | Requires `PostToolUse`; Codex fires `PostToolUse` only for `Bash` so task-progress-from-tools is unavailable |
+| Task progress | :white_check_mark: | :x: | Requires `PostToolUse`; Codex fires `PostToolUse` only for `Bash`, so task progress from tools is unavailable |
 | Task lifecycle notifications | :white_check_mark: | :x: | Requires `TaskCreated` / `TaskCompleted` |
 | Subagent display | :white_check_mark: | :x: | Requires `SubagentStart` / `SubagentStop` |
 | Activity log | :white_check_mark: | :white_check_mark: (Bash only) | Codex's `PostToolUse` fires only for `Bash` tool calls; `Read`/`Edit`/`Write`/`Grep`/`Glob`/etc. are not reported |
@@ -439,7 +439,7 @@ Run ~/.tmux/plugins/tmux-agent-sidebar/target/release/tmux-agent-sidebar doctor 
 
 ### Known Limitations
 
-- **Waiting status (Claude Code)** — After approving a permission prompt, the status stays `waiting` until the next hook event fires. This is a limitation of the Claude Code hook system.
+- **Waiting status (Claude Code)** — After you approve a permission prompt, the status stays `waiting` until the next hook event fires. This is a limitation of the Claude Code hook system.
 - **Codex hook coverage** — Codex emits `SessionStart`, `UserPromptSubmit`, `Stop`, and `PostToolUse`. `PostToolUse` is limited to the `Bash` tool (Codex's schema types `tool_input` as `{ command: string }`), so the Codex activity log shows only Bash commands. Waiting status, task progress, subagent display, and worktree tracking remain unavailable.
 
 ## Customization
